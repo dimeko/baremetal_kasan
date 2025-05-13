@@ -1,3 +1,4 @@
 *.o
 *.su
 .vscode/
+kasan_test.lds
