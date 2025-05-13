@@ -26,14 +26,13 @@ sudo apt-get install build-essential gcc-multilib llvm clang lld \
                      qemu-system-arm qemu-system-misc qemu-system-x86
 ```
 
-## Project layout
+## Project layout (with dlmalloc)
 
 The project constists of the following components:
 
 * `kasan_test.c` -- main test driver which runs KASan test cases
 * `sanitized_lib.c` -- this module implements the test cases and is built with
                     the KASan instrumentation
-* `kasan.c` -- implementation of runtime routines needed for KASan sanitizer
 * `heap.c` -- simple implementation of heap management routines for testing
               KASan
 * `third_party/printf.c` -- a compact implementation of `printf` function
@@ -47,6 +46,11 @@ The project constists of the following components:
               configuration options.
 * `Makefile.arch` -- Makefile fragments whith architecture-specific parameters
                      for building and running the project in the emulator
+
+New files for `dlmalloc`:
+* `kasan_common.c` -- implementation of common runtime routines needed for KASan sanitizer
+* `kasan_simple_malloc.c` -- implementation of KASan runtime routines for simple malloc 
+* `kasan_common.c` -- implementation of KASan runtime routines for dlmalloc 
 
 
 ## Running
