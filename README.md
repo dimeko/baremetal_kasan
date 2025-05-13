@@ -1,4 +1,9 @@
-# Bare-metal KASan implementation
+# Bare-metal KASan implementation with dlmalloc
+
+This fork of [baremetal_kasan](https://github.com/androidoffsec/baremetal_kasan), originally created by Google Project Zero member [Eugene Rodionov](https://github.com/rodionov), adds a simple implementation of the [Doug Lea malloc allocator](https://gee.cs.oswego.edu/dl/html/malloc.html) with KASan support. 
+This is an experimental project that I implemented while working on integrating KASan into U-Boot.
+
+## Bare-metal KASan implementation
 
 *This is not an officially supported Google product.*
 
@@ -12,7 +17,7 @@ the corresponding implementation of
 [KASan](https://www.kernel.org/doc/html/v4.14/dev-tools/kasan.html) in Linux
 kernel.
 
-## Prerequisites
+### Prerequisites
 
 To build and run the program you would need to use LLVM toolchain (`clang` and
 `ld.lld`) for cross complitation and QEMU system emulator for supported
@@ -26,7 +31,7 @@ sudo apt-get install build-essential gcc-multilib llvm clang lld \
                      qemu-system-arm qemu-system-misc qemu-system-x86
 ```
 
-## Project layout (with dlmalloc)
+### Project layout (with dlmalloc)
 
 The project constists of the following components:
 
@@ -53,7 +58,7 @@ New files for `dlmalloc`:
 * `kasan_common.c` -- implementation of KASan runtime routines for dlmalloc 
 
 
-## Running
+### Running
 
 To build and execute the test suite run `ARCH=target_arch make clean run`
 where `target_arch` is one of the supported architectures: `arm`, `aarch64`,
