@@ -12,27 +12,9 @@
  */
 
 #include "common.h"
-#include "heap.h"
+// #include "heap.h"
 #include "printf.h"
-
-#define KASAN_SHADOW_SHIFT 3
-#define KASAN_SHADOW_GRANULE_SIZE (1UL << KASAN_SHADOW_SHIFT)
-#define KASAN_SHADOW_MASK (KASAN_SHADOW_GRANULE_SIZE - 1)
-
-#define ASAN_SHADOW_UNPOISONED_MAGIC 0x00
-#define ASAN_SHADOW_RESERVED_MAGIC 0xff
-#define ASAN_SHADOW_GLOBAL_REDZONE_MAGIC 0xf9
-#define ASAN_SHADOW_HEAP_HEAD_REDZONE_MAGIC 0xfa
-#define ASAN_SHADOW_HEAP_TAIL_REDZONE_MAGIC 0xfb
-#define ASAN_SHADOW_HEAP_FREE_MAGIC 0xfd
-
-#define KASAN_HEAP_HEAD_REDZONE_SIZE 0x20
-#define KASAN_HEAP_TAIL_REDZONE_SIZE 0x20
-
-#define KASAN_MEM_TO_SHADOW(addr) \
-  (((addr) >> KASAN_SHADOW_SHIFT) + KASAN_SHADOW_MAPPING_OFFSET)
-#define KASAN_SHADOW_TO_MEM(shadow) \
-  (((shadow) - KASAN_SHADOW_MAPPING_OFFSET) << KASAN_SHADOW_SHIFT)
+#include "kasan_common.h"
 
 void kasan_bug_report(unsigned long addr, size_t size,
                       unsigned long buggy_shadow_address, uint8_t is_write,
@@ -75,7 +57,7 @@ static inline unsigned long get_poisoned_shadow_address(unsigned long addr,
 }
 
 // Both `address` and `size` must be 8-byte aligned.
-static void poison_shadow(unsigned long address, size_t size, uint8_t value) {
+void poison_shadow(unsigned long address, size_t size, uint8_t value) {
   unsigned long shadow_start, shadow_end;
   size_t shadow_length = 0;
 
@@ -87,7 +69,7 @@ static void poison_shadow(unsigned long address, size_t size, uint8_t value) {
 }
 
 // `address` must be 8-byte aligned
-static void unpoison_shadow(unsigned long address, size_t size) {
+void unpoison_shadow(unsigned long address, size_t size) {
   poison_shadow(address, size & (~KASAN_SHADOW_MASK),
                 ASAN_SHADOW_UNPOISONED_MAGIC);
 
@@ -163,50 +145,6 @@ void *__kasan_memset(void *buf, int c, unsigned int size, unsigned long pc) {
   kasan_check_memory((unsigned long)buf, size, /*is_write*/ true, pc);
 
   return memset(buf, c, size);
-}
-
-// Implement KASan heap management hooks.
-
-struct KASAN_HEAP_HEADER {
-  unsigned int aligned_size;
-};
-
-void *kasan_malloc_hook(unsigned int size) {
-  struct KASAN_HEAP_HEADER *kasan_heap_hdr = NULL;
-  unsigned int algined_size = (size + KASAN_SHADOW_MASK) & (~KASAN_SHADOW_MASK);
-  unsigned int total_size = algined_size + KASAN_HEAP_HEAD_REDZONE_SIZE +
-                            KASAN_HEAP_TAIL_REDZONE_SIZE;
-
-  void *ptr = allocate_chunk(total_size);
-  if (ptr == NULL) return NULL;
-
-  kasan_heap_hdr = (struct KASAN_HEAP_HEADER *)ptr;
-  kasan_heap_hdr->aligned_size = algined_size;
-
-  unpoison_shadow((unsigned long)(ptr + KASAN_HEAP_HEAD_REDZONE_SIZE), size);
-  poison_shadow((unsigned long)ptr, KASAN_HEAP_HEAD_REDZONE_SIZE,
-                ASAN_SHADOW_HEAP_HEAD_REDZONE_MAGIC);
-  poison_shadow(
-      (unsigned long)(ptr + KASAN_HEAP_HEAD_REDZONE_SIZE + algined_size),
-      KASAN_HEAP_TAIL_REDZONE_SIZE, ASAN_SHADOW_HEAP_TAIL_REDZONE_MAGIC);
-
-  return ptr + KASAN_HEAP_HEAD_REDZONE_SIZE;
-}
-
-void kasan_free_hook(void *ptr) {
-  struct KASAN_HEAP_HEADER *kasan_heap_hdr = NULL;
-  unsigned int aligned_size = 0;
-
-  if (ptr == NULL) return;
-
-  kasan_heap_hdr =
-      (struct KASAN_HEAP_HEADER *)(ptr - KASAN_HEAP_HEAD_REDZONE_SIZE);
-  aligned_size = kasan_heap_hdr->aligned_size;
-
-  free_chunk(kasan_heap_hdr);
-  poison_shadow((unsigned long)ptr, aligned_size, ASAN_SHADOW_HEAP_FREE_MAGIC);
-
-  return;
 }
 
 // Implement KAsan error reporting routines.

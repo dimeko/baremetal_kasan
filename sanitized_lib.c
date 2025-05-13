@@ -25,6 +25,15 @@ void test_heap_overflow(void) {
   ptr[oob_index] = 0;
 }
 
+void test_use_after_free(void) {
+  int size = 17;
+  unsigned char *ptr = malloc(size);
+  printf("\nKASan test: heap use after free\n");
+  printf("Freeing allocated pointer %d of size %d and reusing it \n", ptr, size);
+  free(ptr);
+  ptr[0] = 0;
+}
+
 char oob_value;
 
 void test_stack_overflow(void) {

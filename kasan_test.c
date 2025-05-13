@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include "kasan.h"
 
 #include "heap.h"
 #include "printf.h"
@@ -26,9 +25,8 @@ int main(void) {
 
   initialize_heap();
 
-  initialize_kasan();
-
   test_heap_overflow();
+  test_use_after_free();
   test_stack_overflow();
   test_globals_overflow();
   test_memset_overflow();

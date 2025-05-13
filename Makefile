@@ -35,6 +35,7 @@ CFLAGS += -DPRINTF_DISABLE_SUPPORT_FLOAT
 CFLAGS += -DPRINTF_DISABLE_SUPPORT_EXPONENTIAL
 CFLAGS += -DPRINTF_DISABLE_SUPPORT_PTRDIFF_T
 CFLAGS += -DPRINTF_DISABLE_SUPPORT_LONG_LONG
+CFLAGS += -DDLMALLOC_ENABLED
 
 CFLAGS += -Wno-incompatible-library-redeclaration
 
@@ -54,8 +55,10 @@ KASAN_CC_FLAGS += -mllvm -asan-stack=$(KASAN_SANITIZE_STACK)
 KASAN_CC_FLAGS += -mllvm -asan-globals=$(KASAN_SANITIZE_GLOBALS)
 KASAN_CC_FLAGS += -DKASAN_ENABLED
 
-SRCS := kasan.c \
-        heap.c \
+SRCS := heap.c \
+        kasan_common.c \
+		kasan_simple_malloc.c \
+		kasan_dlmalloc.c \
         kasan_test.c \
         sanitized_lib.c \
         rt_utils.c \

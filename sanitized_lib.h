@@ -15,6 +15,7 @@
 #define __SANITIZED_LIB_H__
 
 void test_heap_overflow(void);
+void test_use_after_free(void);
 void test_stack_overflow(void);
 void test_globals_overflow(void);
 void test_memset_overflow(void);
